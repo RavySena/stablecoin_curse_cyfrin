@@ -13,7 +13,11 @@ import { AggregatorV3Interface } from "../lib/chainlink/contracts/src/v0.8/share
  * @notice This contract was created only to practice what was learned in the Cyfrin course.
  */
 contract Lycoin is ReentrancyGuard {
-    /*------------------------------------------------ INSTANCES ------------------------------------------------*/
+    /*------------------------------------------------ TYPE DECLARATIONS ------------------------------------------------*/
+    mapping(address user => mapping(address token => uint256 amount)) private amountUsers;
+    mapping(address token => address priceFeed) private priceFeedTokens;
+    address[] private tokens;
+
     AggregatorV3Interface internal priceFeed;
     LycoinERC20 lycoinERC20;
 
@@ -27,10 +31,12 @@ contract Lycoin is ReentrancyGuard {
     uint256 private constant LIQUIDATION_BONUS = 10;
 
 
-    /*------------------------------------------------ TYPE DECLARATIONS ------------------------------------------------*/
-    mapping(address user => mapping(address token => uint256 amount)) private amountUsers;
-    mapping(address token => address priceFeed) private priceFeedTokens;
-    address[] private tokens;
+    /*------------------------------------------------ EVENTS ------------------------------------------------*/
+    event TokenListADD(address);
+    event TokenMinting(address indexed user, uint256 amount, uint256 amountUser);
+    event TokenBurning(address indexed user, uint256 amount, uint256 amountUser);
+    event CollateralADD(address indexed user, address collateral, uint256 amount, uint256 amountUser);
+    event RedeemCollateral(address indexed from, address indexed to, address collateral, uint256 amount, uint256 amountUser);
 
 
     /*------------------------------------------------ ERRORS ------------------------------------------------*/
@@ -43,14 +49,6 @@ contract Lycoin is ReentrancyGuard {
     error HealthFactorDebtorGood(uint256);
     error HealthFactorNotImproved(uint256);
 
-
-    /*------------------------------------------------ EVENTS ------------------------------------------------*/
-    event TokenListADD(address);
-    event TokenMinting(address indexed user, uint256 amount, uint256 amountUser);
-    event TokenBurning(address indexed user, uint256 amount, uint256 amountUser);
-    event CollateralADD(address indexed user, address collateral, uint256 amount, uint256 amountUser);
-    event RedeemCollateral(address indexed from, address indexed to, address collateral, uint256 amount, uint256 amountUser);
-    
 
     /*------------------------------------------------ MODIFIERS ------------------------------------------------*/
     modifier moreThanZero(uint256 amount) {
@@ -132,6 +130,7 @@ contract Lycoin is ReentrancyGuard {
         emit TokenMinting(msg.sender, amount, amountUser);
     }
 
+
     /**
      * @notice Burn the tokens and then redeem the collateral. Call the `burnLycoin` function and then `reedemCollateral`
      * @param collateralToken The token that was used as collateral
@@ -207,7 +206,6 @@ contract Lycoin is ReentrancyGuard {
     }
 
 
-
     function _revertHealthFactorLow(uint256 _health) internal pure {
         if (_health < MIN_HEALTH_FACTOR) {
             revert HealthFactorLow(_health);
@@ -232,7 +230,6 @@ contract Lycoin is ReentrancyGuard {
 
         emit TokenBurning(from, amount, tokensUser);
     }
-
 
 
     /*------------------------------------------------                   ------------------------------------------------*/
