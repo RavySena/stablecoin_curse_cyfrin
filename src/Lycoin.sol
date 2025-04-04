@@ -73,7 +73,6 @@ contract Lycoin is ReentrancyGuard {
         if (user == address(0)) {
             revert AddressInvalid(user);
         }
-
         _;
     }
 
